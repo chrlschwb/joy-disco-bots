@@ -7,7 +7,6 @@ import { OpeningAddedOrCancelledHandler } from './opening-added-or-cancelled.han
 import { ApplicationCreatedHandler } from './application-created.handler';
 import { BudgetUpdatedHandler } from './budget-updated.handler';
 import { OpeningFilledHandler } from './opening-filled.handler';
-import { RewardPaidHandler } from './reward-paid.handler';
 import { RewardUpdatedHandler } from './reward-updated.handler';
 import { BudgetSetHandler } from './budget-set.handler';
 import { LeadHandler } from './lead.handler';
