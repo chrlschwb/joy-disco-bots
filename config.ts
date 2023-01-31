@@ -43,19 +43,15 @@ export const wgToRoleMap: ChannelNames = {
   operationsWorkingGroupAlpha: 'Builder Worker',
   operationsWorkingGroupGamma: 'Marketing Worker',
   operationsWorkingGroupBeta: 'HR Worker',
+  contentWorkingGroupLead: 'Content Lead',
+  storageWorkingGroupLead: 'Storage Lead',
+  forumWorkingGroupLead: 'Forum Lead',
+  distributionWorkingGroupLead: 'Distribution Lead',
+  operationsWorkingGroupAlphaLead: 'Builder Lead',
+  operationsWorkingGroupGammaLead: 'Marketing Lead',
+  operationsWorkingGroupBetaLead: 'HR Lead',
   councilMemberRole,
-  foundingMemberRole
-};
-
-//same as above, just for lead [this is not yet implemented!]
-export const wgLeadToRoleMap: ChannelNames = {
-  contentWorkingGroup: 'Content Lead',
-  storageWorkingGroup: 'Storage Lead',
-  forumWorkingGroup: 'Forum Lead',
-  distributionWorkingGroup: 'Distribution Lead',
-  operationsWorkingGroupAlpha: 'Builder Lead',
-  operationsWorkingGroupGamma: 'Marketing Lead',
-  operationsWorkingGroupBeta: 'HR Lead',
+  foundingMemberRole,
 };
 
 export const wgEvents = [

@@ -15,6 +15,10 @@ import { CacheableMembershipsProvider } from './cacheable-members.provider';
 const CM_ROLE = 'councilMemberRole';
 const FM_ROLE = 'foundingMemberRole';
 
+type Unpacked<T> = T extends (infer U)[] ? U : T;
+type Membership = Unpacked<MemberByHandleQuery['memberships']>;
+type OnChainRole = Unpacked<Membership['roles']>;
+
 /**
  * Cron-based syncing of Joystream on-chain roles with Discord server roles.
  * On-chain roles are fetched from Query node for all Discord users who claimed their Joystream memberships.
@@ -81,19 +85,22 @@ export class RoleSyncService {
 
         // Keep only active roles, filter the others out
         const onChainRoles = queryNodeMember.roles.filter(
-          (role: any) => role.status.__typename === 'WorkerStatusActive',
+          (role) => role.status.__typename === 'WorkerStatusActive',
         );
 
         // first pass: assigning server roles based on joystream ones
         for (let r = 0; r < onChainRoles.length; r++) {
-          const roleInJoystream = onChainRoles[r].groupId;
+          const isLead = onChainRoles[r].isLead;
+          const roleInJoystream =
+            onChainRoles[r].groupId + (!isLead ? 'Lead' : '');
+
           await this.maybeAssignRole(roleInJoystream, ithMember, serverUser);
         }
 
         // second pass: revokation of server roles that user doesn't have anymore in joystream
         for (let m = 0; m < ithMember.daoRoles.length; m++) {
           const dbRole = ithMember.daoRoles[m];
-          if (dbRole.role === CM_ROLE || dbRole.role === FM_ROLE) continue; // CM & FM role is handled separately
+          if (dbRole.role === CM_ROLE || dbRole.role === FM_ROLE) continue; // CM & FM roles are handled separately
           await this.maybeRevokeRole(dbRole, ithMember, onChainRoles);
         }
 
@@ -183,11 +190,11 @@ export class RoleSyncService {
   private async maybeRevokeRole(
     dbRole: DaoRole,
     ithMember: DaoMembership,
-    onChainRoles: any,
+    onChainRoles: OnChainRole[],
   ) {
     // Check that user's db role is still relevant.
     // If it's not, user needs to be revoked this role, and corresponding DaoRole record deleted for this user.
-    if (!this.hasOnchainRole(onChainRoles, dbRole.role)) {
+    if (!this.hasOnChainRole(onChainRoles, dbRole.role)) {
       this.revokeRole(dbRole, ithMember, onChainRoles);
     }
   }
@@ -195,7 +202,7 @@ export class RoleSyncService {
   private async revokeRole(
     dbRole: DaoRole,
     ithMember: DaoMembership,
-    onChainRoles: any,
+    onChainRoles: OnChainRole[],
   ) {
     const mainServer = this.configService.get('DISCORD_SERVER');
     const roleToRevoke = (await findServerRole(
@@ -249,9 +256,8 @@ export class RoleSyncService {
     return member.daoRoles.find((r) => r.role === onChainRole) !== undefined;
   }
 
-  private hasOnchainRole(onChainRoles: any[], dbRole: string): boolean {
-    // TODO replace any with strong type
-    return onChainRoles.find((r) => r.groupId === dbRole) !== undefined;
+  private hasOnChainRole(onChainRoles: OnChainRole[], dbRole: string): boolean {
+    return onChainRoles.find((r) => dbRole.includes(r.groupId)) !== undefined;
   }
 
   private async getPageOfMemberships(
