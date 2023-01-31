@@ -92,7 +92,7 @@ export class RoleSyncService {
         for (let r = 0; r < onChainRoles.length; r++) {
           const isLead = onChainRoles[r].isLead;
           const roleInJoystream =
-            onChainRoles[r].groupId + (!isLead ? 'Lead' : '');
+            onChainRoles[r].groupId + (isLead ? 'Lead' : '');
 
           await this.maybeAssignRole(roleInJoystream, ithMember, serverUser);
         }
