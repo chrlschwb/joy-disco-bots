@@ -1,8 +1,8 @@
 # Run codegen using: npm run generate
-# Make sure schema endpoint is accessible! 
-schema: 
-  - https://query.joystream.org/graphql # Pioneer 
-  
+# Make sure schema endpoint is accessible!
+schema:
+  - https://query.joystream.org/graphql # Pioneer
+
 documents:
   - >
     query openingById($openingId: ID!) {
@@ -50,6 +50,8 @@ documents:
       id    
       controllerAccount
       rootAccount
+      isVerified
+      isFoundingMember
       isCouncilMember
       roles {
         id
@@ -72,7 +74,7 @@ documents:
       }
     }
 
-  - > 
+  - >
     query applicationById($applicationId: ID!) {
       workingGroupApplicationByUniqueInput(where: {id: $applicationId}) {
         applicant {
@@ -89,21 +91,21 @@ documents:
       }
     }
 
-  - > 
+  - >
     query memberByHandle($handle: String) {
       memberships(where: {handle_eq: $handle}) {
         ...MemberFields
       }
     }
 
-  - > 
+  - >
     query membersByHandles($handles: [String!]) {
       memberships(where: {handle_in: $handles}) {
         ...MemberFields
       }
     }
-    
-  - > 
+
+  - >
     query workersByAccount($account: String!) {
       workers(where: {rewardAccount_eq: $account}) {
         id
@@ -113,7 +115,7 @@ documents:
       }
     }
 
-  - > 
+  - >
     query activeCouncilMembers {
       electedCouncils(where: {endedAtBlock_eq: null}) {
         councilMembers {
@@ -157,7 +159,7 @@ documents:
         }
       }
     }
-  - > 
+  - >
     query getStorageNodes {
       storageBuckets(where: {dataObjectsCount_gt: 0}) {
         operatorMetadata {
