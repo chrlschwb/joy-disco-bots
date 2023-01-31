@@ -32,6 +32,7 @@ export const channelNames: ChannelNames = {
 
 export const identityValidatedRole = 'on-chain identity verified';
 export const councilMemberRole = 'Council Member';
+export const foundingMemberRole = 'founding member';
 
 //mapping of group Id coming from Query node to server role name
 export const wgToRoleMap: ChannelNames = {
@@ -43,6 +44,7 @@ export const wgToRoleMap: ChannelNames = {
   operationsWorkingGroupGamma: 'Marketing Worker',
   operationsWorkingGroupBeta: 'HR Worker',
   councilMemberRole: councilMemberRole,
+  foundingMemberRole
 };
 
 //same as above, just for lead [this is not yet implemented!]
