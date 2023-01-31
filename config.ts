@@ -43,7 +43,7 @@ export const wgToRoleMap: ChannelNames = {
   operationsWorkingGroupAlpha: 'Builder Worker',
   operationsWorkingGroupGamma: 'Marketing Worker',
   operationsWorkingGroupBeta: 'HR Worker',
-  councilMemberRole: councilMemberRole,
+  councilMemberRole,
   foundingMemberRole
 };
 
