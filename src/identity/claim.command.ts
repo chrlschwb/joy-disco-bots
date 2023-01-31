@@ -7,7 +7,11 @@ import {
   UsePipes,
 } from '@discord-nestjs/core';
 import { Inject, Logger } from '@nestjs/common';
-import { CacheType, CommandInteraction, ContextMenuInteraction } from 'discord.js';
+import {
+  CacheType,
+  CommandInteraction,
+  ContextMenuInteraction,
+} from 'discord.js';
 import { PendingVerification } from 'src/db/pending-verification.entity';
 import { ClaimDto } from './claim.dto';
 import { nanoid } from 'nanoid';
@@ -18,79 +22,104 @@ import { MemberByHandleQuery, Sdk } from 'src/qntypes';
   description: 'Claim an on-chain identity',
 })
 @UsePipes(TransformPipe)
-export class IdentityClaimCommand implements DiscordTransformedCommand<ClaimDto> {
+export class IdentityClaimCommand
+  implements DiscordTransformedCommand<ClaimDto>
+{
   private readonly logger = new Logger(IdentityClaimCommand.name);
 
   constructor(
     @Inject('PENDING_VERIFICATION_REPOSITORY')
     private readonly pendingVerificationRepository: typeof PendingVerification,
-    @Inject('PioneerGqlSdk') private readonly pioneerApi: Sdk
+    @Inject('PioneerGqlSdk') private readonly pioneerApi: Sdk,
   ) {}
 
-  async handler(@Payload() dto: ClaimDto, context: TransformedCommandExecutionContext) {
-    this.logger.log(`${this.buildHandle(context.interaction)} claiming on-chain identity '${dto.username}' (${dto.wallet})`);
+  async handler(
+    @Payload() dto: ClaimDto,
+    context: TransformedCommandExecutionContext,
+  ) {
+    this.logger.log(
+      `${this.buildHandle(context.interaction)} claiming on-chain identity '${
+        dto.username
+      }' (${dto.wallet})`,
+    );
 
     // verify that the address really belongs to the claimed membership
-    let queryNodeMember: MemberByHandleQuery | null  =  null;
+    let queryNodeMember: MemberByHandleQuery | null = null;
     try {
       // Note: retryable client isn't used here. Why? Discord command only has 2 seconds to respond to user. Retries take longer :(
-      queryNodeMember = await this.pioneerApi.memberByHandle({handle: dto.username});
+      queryNodeMember = await this.pioneerApi.memberByHandle({
+        handle: dto.username,
+      });
     } catch (error) {
       this.logger.warn(`Username ${dto.username} not found`);
     }
-    
-    if(queryNodeMember && queryNodeMember.memberships.length > 0 && 
-      (queryNodeMember.memberships[0].controllerAccount === dto.wallet || 
-        queryNodeMember.memberships[0].rootAccount === dto.wallet)) {
 
-      this.logger.log(`${this.buildHandle(context.interaction)} claiming on-chain identity '${dto.username}' (${dto.wallet})`);
+    if (
+      queryNodeMember &&
+      queryNodeMember.memberships.length > 0 &&
+      (queryNodeMember.memberships[0].controllerAccount === dto.wallet ||
+        queryNodeMember.memberships[0].rootAccount === dto.wallet)
+    ) {
+      this.logger.log(
+        `${this.buildHandle(context.interaction)} claiming on-chain identity '${
+          dto.username
+        }' (${dto.wallet})`,
+      );
       // existing pending verification check
-      // TODO how to make sure only one pending verification exist for a given user? 
-      const verification = await this.pendingVerificationRepository.findOne(
-        {
-          where: {
-            startedByDiscordHandle: this.buildHandle(context.interaction)
-          }, 
-          raw: true
-        });
-      if(verification) {
+      // TODO how to make sure only one pending verification exist for a given user?
+      const verification = await this.pendingVerificationRepository.findOne({
+        where: {
+          startedByDiscordHandle: this.buildHandle(context.interaction),
+        },
+        raw: true,
+      });
+      if (verification) {
         context.interaction.reply({
-          content: `You already started to claim on-chain identity. Use \`/solve\` command to finish the process`,
-          ephemeral: true
+          content: `You already started to claim on-chain identity. Use \`/solve\` command to finish the process.\nChallenge: ${verification.challenge}`,
+          ephemeral: true,
         });
-        return
+        return;
       } else {
         const challenge = nanoid();
-        const created = await this.pendingVerificationRepository.create(
-          { 
-            claimedMembership: dto.username, 
-            claimedAccountAddress: dto.wallet,
-            startedByDiscordHandle: this.buildHandle(context.interaction),
-            challenge: challenge
-          });
-        if(created) {
-          this.logger.log(`${this.buildHandle(context.interaction)} initiated claiming on-chain identity '${dto.username}' (${dto.wallet})`);
+        const created = await this.pendingVerificationRepository.create({
+          claimedMembership: dto.username,
+          claimedAccountAddress: dto.wallet,
+          startedByDiscordHandle: this.buildHandle(context.interaction),
+          challenge: challenge,
+        });
+        if (created) {
+          this.logger.log(
+            `${this.buildHandle(
+              context.interaction,
+            )} initiated claiming on-chain identity '${dto.username}' (${
+              dto.wallet
+            })`,
+          );
           context.interaction.reply({
             content: `Copy the following string and sign it using [Polkadot App](https://polkadot.js.org/apps/?rpc=wss://rpc.joystream.org:9944/#/signing):\n\`${challenge}\`\nThen, use \`/solve\` command to finish the process.`,
-            ephemeral: true
+            ephemeral: true,
           });
-          return
+          return;
         } else {
           context.interaction.reply({
             content: `Well, this is embarassing, but I have to ask you to try again later.`,
-            ephemeral: true
+            ephemeral: true,
           });
-          return
+          return;
         }
       }
     } else {
       context.interaction.reply({
         content: `You cannot claim this identity`,
-        ephemeral: true
+        ephemeral: true,
       });
-    }    
+    }
   }
-  buildHandle(interaction: CommandInteraction<CacheType> | ContextMenuInteraction<CacheType>): string {
+  buildHandle(
+    interaction:
+      | CommandInteraction<CacheType>
+      | ContextMenuInteraction<CacheType>,
+  ): string {
     return `${interaction.user.username}#${interaction.user.discriminator}`;
   }
 }
