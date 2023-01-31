@@ -1,10 +1,10 @@
 # Run codegen using: npm run generate
-# Make sure schema endpoint is accessible! 
-schema: 
+# Make sure schema endpoint is accessible!
+schema:
   - https://orion.joystream.org/graphql # Atlas
-  
+
 documents:
-  - > 
+  - >
     query getVideoById($videoId: ID!) {
       videoByUniqueInput(where: {id: $videoId}) {
             ...VideoFields        
@@ -32,7 +32,6 @@ documents:
       createdAt
       isPublic
       isExplicit
-      isFeatured
       hasMarketing
       isCensored
       isCommentSectionEnabled
@@ -266,7 +265,7 @@ documents:
       }
       __typename
     }
-    
+
   - >
     query getDistributionBucketsWithOperators {
       distributionBuckets(limit: 50, where: {distributing_eq: true}) {
@@ -292,7 +291,7 @@ documents:
       status
       __typename
     }
-    
+
 generates:
   ./src/qntypes-atlas.ts:
     plugins:
