@@ -38,7 +38,7 @@ export const channelNames: ChannelNames = {
 
   // BOTS
   videos: '🤖｜video-bot',
-  forumspam: '🤖｜forum-bot',
+  forumBot: '🤖｜forum-bot',
 };
 
 export const identityValidatedRole = 'on-chain identity verified';
@@ -104,7 +104,7 @@ export const forumCategoriesToChannels: ForumCategoryToDiscordChannelMap[] = [
       id: 1,
       name: 'Joystream General',
     },
-    channels: [channelNames.general],
+    channels: [channelNames.forumBot],
   },
   {
     category: {
@@ -279,7 +279,7 @@ export const forumCategoriesToChannels: ForumCategoryToDiscordChannelMap[] = [
       id: 48,
       name: 'Council Candidate Manifesto',
     },
-    channels: [channelNames.general],
+    channels: [channelNames.council],
   },
   {
     category: {
