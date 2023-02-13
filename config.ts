@@ -1,7 +1,12 @@
 import { EventEmitterModuleOptions } from '@nestjs/event-emitter/dist/interfaces';
 import { AxiosRequestConfig } from 'axios';
 import { BackOffPolicy, RetryOptions } from 'typescript-retry-decorator';
-import { ChannelNames, Licenses } from './src/types';
+
+import {
+  ChannelNames,
+  Licenses,
+  ForumCategoryToDiscordChannelMap,
+} from './src/types';
 
 export const database = 'joy_dao';
 
@@ -9,8 +14,10 @@ export const database = 'joy_dao';
 export const channelNames: ChannelNames = {
   // Discussion
   general: '💬｜general',
+  announcement: '📢｜announcements',
   techSupport: '💻｜tech-support',
   atlasFeedback: '🛫｜atlas-testing',
+  offTopic: '🍻｜off-topic',
   // DAO
   // groups https://github.com/Joystream/joystream/blob/c57054eebe5da4f683134dbdaaecf50263ec7336/cli/src/Types.ts#L53-L63
   operationsWorkingGroupAlpha: '👷｜builders',
@@ -25,9 +32,14 @@ export const channelNames: ChannelNames = {
   council: '🏛｜council',
   proposals: '📋｜proposals',
   bounties: '💻｜active-bounties',
+  app: '💾｜apps',
+  // Work
+  atlasGeneral: 'atlas-general',
+  pioneerGeneral: 'pioneer-general',
+
   // BOTS
   videos: '🤖｜video-bot',
-  forumspam: '🤖｜forum-bot',
+  forumBot: '🤖｜forum-bot',
 };
 
 export const identityValidatedRole = 'on-chain identity verified';
@@ -87,139 +99,202 @@ export const licenses: Licenses = {
   '1008': 'CC_BY_NC_ND',
 };
 
-export const forumCategoriesToChannels = [
+export const forumCategoriesToChannels: ForumCategoryToDiscordChannelMap[] = [
   {
     category: {
       id: 1,
-      name: 'Bounties',
+      name: 'Joystream General',
     },
-    channels: [channelNames.bounties],
+    channels: [channelNames.forumBot],
   },
   {
     category: {
-      id: 3,
+      id: 2,
       name: 'Governance',
     },
     channels: [channelNames.council],
   },
   {
     category: {
-      id: 9,
-      name: 'Forum WG',
+      id: 3,
+      name: 'Joystream DApps',
     },
-    channels: [channelNames.forum],
+    channels: [channelNames.app],
   },
   {
     category: {
-      id: 11,
-      name: 'Content WG',
-    },
-    channels: [channelNames.contentWorkingGroup, channelNames.council],
-  },
-  {
-    category: {
-      id: 12,
-      name: 'Builders WG',
-    },
-    channels: [channelNames.operationsWorkingGroupAlpha, channelNames.council],
-  },
-  {
-    category: {
-      id: 13,
-      name: 'SP WG',
-    },
-    channels: [channelNames.storageWorkingGroup, channelNames.council],
-  },
-  {
-    category: {
-      id: 14,
-      name: 'Marketing WG',
-    },
-    channels: [channelNames.operationsWorkingGroupGamma, channelNames.council],
-  },
-  {
-    category: {
-      id: 15,
-      name: 'Distribution WG',
-    },
-    channels: [channelNames.distributionWorkingGroup, channelNames.council],
-  },
-  {
-    category: {
-      id: 16,
-      name: 'HR WG',
-    },
-    channels: [channelNames.operationsWorkingGroupBeta, channelNames.council],
-  },
-  {
-    category: {
-      id: 18,
-      name: 'Content Creators',
-    },
-    channels: [channelNames.contentCreator],
-  },
-  {
-    category: {
-      id: 19,
-      name: 'Validators',
-    },
-    channels: [channelNames.validators],
-  },
-  {
-    category: {
-      id: 23,
-      name: 'Discussion',
-    },
-    channels: [channelNames.forumspam],
-  },
-  {
-    category: {
-      id: 25,
-      name: 'Help & Support',
+      id: 4,
+      name: 'Technical Discussion',
     },
     channels: [channelNames.techSupport],
   },
   {
     category: {
-      id: 28,
-      name: 'Creatives',
+      id: 7,
+      name: 'Council Reports',
     },
-    channels: [channelNames.contentCreator],
+    channels: [channelNames.council],
   },
   {
     category: {
-      id: 29,
+      id: 8,
+      name: 'Pre-proposals',
+    },
+    channels: [channelNames.proposals],
+  },
+  {
+    category: {
+      id: 10,
+      name: 'Important Announcements',
+    },
+    channels: [channelNames.announcement],
+  },
+  {
+    category: {
+      id: 13,
+      name: 'Gleev',
+    },
+    channels: [channelNames.app],
+  },
+  {
+    category: {
+      id: 14,
+      name: 'l1.media',
+    },
+    channels: [channelNames.app],
+  },
+  {
+    category: {
+      id: 15,
+      name: 'Atlas',
+    },
+    channels: [channelNames.atlasGeneral],
+  },
+  {
+    category: {
+      id: 16,
+      name: 'Pioneer',
+    },
+    channels: [channelNames.pioneerGeneral],
+  },
+  {
+    category: {
+      id: 33,
+      name: 'Working Groups (Technical)',
+    },
+    channels: [channelNames.council],
+  },
+  {
+    category: {
+      id: 34,
+      name: 'Working Groups (Non-Technical)',
+    },
+    channels: [channelNames.council],
+  },
+  {
+    category: {
+      id: 35,
+      name: 'Media Releases',
+    },
+    channels: [channelNames.operationsWorkingGroupGamma],
+  },
+  {
+    category: {
+      id: 36,
+      name: 'Community Guide',
+    },
+    channels: [channelNames.techSupport],
+  },
+  {
+    category: {
+      id: 37,
+      name: 'Off Topic',
+    },
+    channels: [channelNames.offTopic],
+  },
+  {
+    category: {
+      id: 38,
+      name: 'Storage',
+    },
+    channels: [channelNames.storageWorkingGroup],
+  },
+  {
+    category: {
+      id: 39,
+      name: 'Distribution',
+    },
+    channels: [channelNames.distributionWorkingGroup],
+  },
+  {
+    category: {
+      id: 40,
+      name: 'Builders',
+    },
+    channels: [channelNames.operationsWorkingGroupAlpha],
+  },
+  {
+    category: {
+      id: 41,
+      name: 'Apps WG',
+    },
+    channels: [channelNames.app],
+  },
+  {
+    category: {
+      id: 42,
+      name: 'HR',
+    },
+    channels: [channelNames.operationsWorkingGroupBeta],
+  },
+  {
+    category: {
+      id: 44,
       name: 'Marketing',
     },
     channels: [channelNames.operationsWorkingGroupGamma],
   },
   {
     category: {
-      id: 30,
-      name: 'Development',
+      id: 45,
+      name: 'Forum',
     },
-    channels: [channelNames.operationsWorkingGroupAlpha],
+    channels: [channelNames.forumWorkingGroup],
   },
   {
     category: {
-      id: 31,
-      name: 'Atlas Feedback',
+      id: 46,
+      name: 'Content',
     },
-    channels: [channelNames.atlasFeedback],
+    channels: [channelNames.contentWorkingGroup],
   },
   {
     category: {
-      id: 32,
-      name: 'Education',
+      id: 47,
+      name: 'Council Dialogue',
     },
-    channels: [channelNames.forumspam],
+    channels: [channelNames.council],
   },
   {
     category: {
-      id: 35,
-      name: 'Lounge',
+      id: 48,
+      name: 'Council Candidate Manifesto',
     },
-    channels: [channelNames.forumspam],
+    channels: [channelNames.council],
+  },
+  {
+    category: {
+      id: 49,
+      name: 'Archives',
+    },
+    channels: [channelNames.forumWorkingGroup],
+  },
+  {
+    category: {
+      id: 50,
+      name: 'Validators',
+    },
+    channels: [channelNames.validators],
   },
 ];
 

@@ -1,11 +1,12 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { OnEvent } from "@nestjs/event-emitter";
-import { TextChannel } from "discord.js";
-import { getNewPostEmbed } from "./forum.embeds";
-import { PostByIdQuery } from "src/qntypes";
-import { DiscordChannels, EventWithBlock } from "src/types";
-import { BaseEventHandler } from "./base.event.handler";
-import { ForumPostId } from "@joystream/types/primitives";
+import { TextChannel } from 'discord.js';
+import { Injectable, Logger } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { ForumPostId } from '@joystream/types/primitives';
+
+import { getNewPostEmbed } from './forum.embeds';
+import { PostByIdQuery } from 'src/qntypes';
+import { EventWithBlock } from 'src/types';
+import { BaseEventHandler } from './base.event.handler';
 
 @Injectable()
 export class PostCreatedHandler extends BaseEventHandler {
@@ -16,29 +17,31 @@ export class PostCreatedHandler extends BaseEventHandler {
     const { data } = payload.event.event;
     const postId = data[0] as ForumPostId;
     const post = await this.queryNodeClient.postById(postId.toString());
-    const serverChannels = this.findChannelsByPost(post, this.channels);
-    serverChannels?.forEach((ch: TextChannel) => {
-      this.logger.debug(`Sending to channel [${ch.id.toString()}] [${ch.name}]`);
+    const serverChannels = this.findChannelsByPost(post);
+    serverChannels.forEach((ch) => {
+      this.logger.debug(
+        `Sending to channel [${ch.id.toString()}] [${ch.name}]`,
+      );
       ch.send({
-        embeds: [
-          getNewPostEmbed(
-            post,
-            payload.block,
-            payload.event
-          ),
-        ],
+        embeds: [getNewPostEmbed(post, payload.block, payload.event)],
       });
     });
   }
 
-  findChannelsByPost(post: PostByIdQuery, channels: DiscordChannels): TextChannel[] | null {
+  findChannelsByPost(post: PostByIdQuery): TextChannel[] {
+    if (!post.forumPostByUniqueInput) return [];
+
+    const { id, parentId } = post.forumPostByUniqueInput.thread.category;
+
+    this.logger.debug(id, parentId);
+
     return this.findChannelsByCategoryId(
-      post.forumPostByUniqueInput?.thread.category.id || '',
-      post.forumPostByUniqueInput?.thread.category.parentId || '',
-      channels);
+      parseInt(id, 10),
+      parentId ? parseInt(parentId, 10) : undefined,
+    );
   }
 
   getLogger(): Logger {
-    return this.logger
+    return this.logger;
   }
 }
