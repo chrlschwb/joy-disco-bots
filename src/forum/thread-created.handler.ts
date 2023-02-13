@@ -1,11 +1,12 @@
+import { TextChannel } from 'discord.js';
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { TextChannel } from 'discord.js';
-import { getNewThreadEmbed } from './forum.embeds';
+import { ForumThreadId } from '@joystream/types/primitives';
+
 import { ForumThreadByIdQuery } from 'src/qntypes';
 import { EventWithBlock } from 'src/types';
+import { getNewThreadEmbed } from './forum.embeds';
 import { BaseEventHandler } from './base.event.handler';
-import { ForumThreadId } from '@joystream/types/primitives';
 
 @Injectable()
 export class ThreadCreatedHandler extends BaseEventHandler {

@@ -1,6 +1,7 @@
 import { EventEmitterModuleOptions } from '@nestjs/event-emitter/dist/interfaces';
 import { AxiosRequestConfig } from 'axios';
 import { BackOffPolicy, RetryOptions } from 'typescript-retry-decorator';
+
 import {
   ChannelNames,
   Licenses,
