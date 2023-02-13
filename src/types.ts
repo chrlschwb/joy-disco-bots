@@ -1,5 +1,5 @@
 import Discord from 'discord.js';
-import { EventRecord } from '@polkadot/types/interfaces'
+import { EventRecord } from '@polkadot/types/interfaces';
 
 export interface ChannelNames {
   [key: string]: string;
@@ -14,14 +14,14 @@ export interface DiscordChannels {
 }
 
 export interface EventWithBlock {
-  block: number,
-  event: EventRecord
+  block: number;
+  event: EventRecord;
 }
 
 export interface ForumCategoryToDiscordChannelMap {
-  category:{
-    id:number;
+  category: {
+    id: number;
     name: string;
-  },
-  channels:string[]
+  };
+  channels: string[];
 }
