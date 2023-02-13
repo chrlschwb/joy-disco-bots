@@ -17,3 +17,11 @@ export interface EventWithBlock {
   block: number,
   event: EventRecord
 }
+
+export interface ForumCategoryToDiscordChannelMap {
+  category:{
+    id:number;
+    name: string;
+  },
+  channels:string[]
+}

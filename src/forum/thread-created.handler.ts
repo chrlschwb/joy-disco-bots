@@ -1,11 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { OnEvent } from "@nestjs/event-emitter";
-import { TextChannel } from "discord.js";
-import { getNewThreadEmbed } from "./forum.embeds";
-import { ForumThreadByIdQuery } from "src/qntypes";
-import { DiscordChannels, EventWithBlock } from "src/types";
-import { BaseEventHandler } from "./base.event.handler";
-import { ForumThreadId } from '@joystream/types/primitives'
+import { Injectable, Logger } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { TextChannel } from 'discord.js';
+import { getNewThreadEmbed } from './forum.embeds';
+import { ForumThreadByIdQuery } from 'src/qntypes';
+import { EventWithBlock } from 'src/types';
+import { BaseEventHandler } from './base.event.handler';
+import { ForumThreadId } from '@joystream/types/primitives';
 
 @Injectable()
 export class ThreadCreatedHandler extends BaseEventHandler {
@@ -15,30 +15,31 @@ export class ThreadCreatedHandler extends BaseEventHandler {
   async handleThreadCreatedEvent(payload: EventWithBlock) {
     const { data } = payload.event.event;
     const threadId = data[1] as ForumThreadId;
-    const thread = await this.queryNodeClient.forumThreadById(threadId.toString());
-    const serverChannels = this.findChannelsByThread(thread, this.channels);
+    const thread = await this.queryNodeClient.forumThreadById(
+      threadId.toString(),
+    );
+    const serverChannels = this.findChannelsByThread(thread);
     serverChannels?.forEach((ch: TextChannel) => {
-      this.logger.debug(`Sending to channel [${ch.id.toString()}] [${ch.name}]`);
+      this.logger.debug(
+        `Sending to channel [${ch.id.toString()}] [${ch.name}]`,
+      );
       ch.send({
-        embeds: [
-          getNewThreadEmbed(
-            thread,
-            payload.block,
-            payload.event
-          ),
-        ],
-      })
+        embeds: [getNewThreadEmbed(thread, payload.block, payload.event)],
+      });
     });
   }
 
-  findChannelsByThread(thread: ForumThreadByIdQuery, channels: DiscordChannels): TextChannel[] | null {
+  findChannelsByThread(thread: ForumThreadByIdQuery): TextChannel[] {
+    if (!thread.forumThreadByUniqueInput) return [];
+
+    const { id, parentId } = thread.forumThreadByUniqueInput.category;
     return this.findChannelsByCategoryId(
-      thread.forumThreadByUniqueInput?.category.id || '', 
-      thread.forumThreadByUniqueInput?.category.parentId || '', 
-      channels);
+      parseInt(id, 10),
+      parentId ? parseInt(parentId, 10) : undefined,
+    );
   }
 
   getLogger(): Logger {
-    return this.logger
+    return this.logger;
   }
 }

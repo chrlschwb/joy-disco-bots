@@ -1,37 +1,43 @@
+import { Client, TextChannel } from 'discord.js';
 import { InjectDiscordClient, Once } from '@discord-nestjs/core';
 import { Injectable, Logger, Optional } from '@nestjs/common';
-import { Client, TextChannel } from 'discord.js';
-import { DiscordChannels } from 'src/types';
+
 import { forumCategoriesToChannels } from 'config';
-import { getDiscordChannels } from 'src/util';
 import { RetryablePioneerClient } from 'src/gql/pioneer.client';
+import { DiscordChannels } from 'src/types';
+import { getDiscordChannels } from 'src/util';
 
 @Injectable()
 export abstract class BaseEventHandler {
-
   constructor(
     protected readonly queryNodeClient: RetryablePioneerClient,
     @InjectDiscordClient()
     protected readonly client: Client,
     @Optional()
-    protected channels: DiscordChannels) {
-  }
+    protected channels: DiscordChannels,
+  ) {}
 
   @Once('ready')
   async onReady(): Promise<void> {
     this.channels = await getDiscordChannels(this.client);
   }
 
-  findChannelsByCategoryId(categoryId: string, parentCategoryId: string, channels: DiscordChannels): TextChannel[] | null {
+  findChannelsByCategoryId(
+    categoryId: number,
+    parentCategoryId?: number,
+  ): TextChannel[] {
     const mappedChannels = forumCategoriesToChannels.find(
-      (mapping: any) => mapping.category.id == categoryId || mapping.category.id == parentCategoryId
+      (mapping) => mapping.category.id == categoryId,
     )?.channels;
     if (!mappedChannels) {
-      this.getLogger().log(`Mapped channels not found for categoryId=${categoryId}, parentCategory=${parentCategoryId}`);
-      return null;
+      this.getLogger().log(
+        `Mapped channels not found for categoryId=${categoryId}, parentCategory=${parentCategoryId}`,
+      );
+      return [];
     }
     const oneD = [] as TextChannel[];
-    for (const row of Object.values(channels)) for (const e of row) oneD.push(e);
+    for (const row of Object.values(this.channels))
+      for (const e of row) oneD.push(e);
     return oneD.filter((ch: TextChannel) => mappedChannels.includes(ch.name));
   }
 
