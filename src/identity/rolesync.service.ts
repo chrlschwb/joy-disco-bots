@@ -3,10 +3,16 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { DaoMembership } from 'src/db/dao-membership.entity';
 import { DaoRole } from 'src/db/dao-role.entity';
 import { Op } from 'sequelize';
-import { wgToRoleMap } from '../../config';
+import { channelNames, identityValidatedRole, wgToRoleMap } from '../../config';
 import { ConfigService } from '@nestjs/config';
-import { InjectDiscordClient } from '@discord-nestjs/core';
-import { Client, GuildMember, Role } from 'discord.js';
+import { InjectDiscordClient, Once } from '@discord-nestjs/core';
+import {
+  Client,
+  DiscordAPIError,
+  GuildMember,
+  Role,
+  TextChannel,
+} from 'discord.js';
 import { findServerRole } from 'src/util';
 import { RetryablePioneerClient } from 'src/gql/pioneer.client';
 import { MemberByHandleQuery } from 'src/qntypes';
@@ -38,6 +44,82 @@ export class RoleSyncService {
     private readonly queryNodeClient: RetryablePioneerClient,
     private readonly membershipsProvider: CacheableMembershipsProvider,
   ) {}
+
+  @Once('ready')
+  async syncActiveServerswithDB() {
+    const servers = await this.client.guilds.fetch();
+
+    this.logger.log('Start syncing active servers with DB...');
+
+    const promises = servers.map((server) => this.syncServerRoles(server.id));
+
+    await Promise.all(promises);
+
+    this.logger.log('Done syncing active servers with DB ✅');
+  }
+
+  private async syncServerRoles(serverId: string) {
+    const server = await this.client.guilds.fetch(serverId);
+
+    this.logger.log(`Start syncing '${server.name}' with DB...`);
+
+    const serverUsers = await server.members.fetch();
+
+    const serverIdentityValidatedRole = await findServerRole(
+      this.client,
+      serverId,
+      identityValidatedRole,
+    );
+
+    if (!serverIdentityValidatedRole) {
+      this.logger.error(
+        `The '${identityValidatedRole}' role wan't found in the ${server.name} (Server ID: ${server.id})`,
+      );
+      return;
+    }
+
+    const onChainIdentityVerifiedUsers = serverUsers.filter(
+      (u) => u.roles.cache.get(serverIdentityValidatedRole.id) !== undefined,
+    );
+
+    const promises = onChainIdentityVerifiedUsers.map(async (member) => {
+      const dbUser = await this.daoMembershipRepository.findOne({
+        where: {
+          discordHandle: `${this.discordHandle(member)}`,
+        },
+      });
+
+      if (!dbUser) {
+        // revoke all roles except these rules
+        const exceptedRoles = ['jsgenesis', 'participant'];
+        await member.roles.remove(
+          member.roles.cache.filter(
+            (role) => !exceptedRoles.includes(role.name),
+          ),
+        );
+
+        const message = `Hi ${member.user},\nYour roles were removed from the **${server.name}** server, since your identity wasn't found in the bot DB.\nPlease do on-chain verification if you want to sync on-chain roles in the server.\nYou can do verification by using this command in the server: **/claim**
+        `;
+
+        try {
+          await member.send(message);
+        } catch (error) {
+          if (error instanceof DiscordAPIError && error.code === 50007) {
+            const councilChannel = server.channels.cache.find(
+              (channel) => channel.name === channelNames.council,
+            ) as TextChannel;
+            await councilChannel.send(message);
+          }
+        }
+      }
+
+      return;
+    });
+
+    await Promise.all(promises);
+
+    this.logger.log(`Done syncing '${server.name}' with DB ✅`);
+  }
 
   @Cron(CronExpression.EVERY_30_MINUTES)
   async syncOnChainRoles() {
@@ -288,5 +370,9 @@ export class RoleSyncService {
       )}`,
     );
     return pageOfMemberships;
+  }
+
+  private discordHandle(member: GuildMember): string {
+    return `${member.user.username}#${member.user.discriminator}`;
   }
 }
