@@ -77,18 +77,19 @@ export class RoleSyncService {
       );
       return;
     }
-
+    
     const onChainIdentityVerifiedUsers = serverUsers.filter(
       (u) => u.roles.cache.get(serverIdentityValidatedRole.id) !== undefined,
     );
 
     const promises = onChainIdentityVerifiedUsers.map(async (member) => {
+      
       const dbUser = await this.daoMembershipRepository.findOne({
         where: {
-          discordHandle: `${this.discordHandle(member)}`,
+          discordHandle: this.discordHandle(member),
         },
       });
-
+      
       if (!dbUser) {
         // revoke all roles except these rules
         const exceptedRoles = ['jsgenesis', 'participant'];
